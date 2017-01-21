@@ -211,7 +211,12 @@ class Command(BaseCommand):
                 send_emails=True,
                 latest__is_emailed=False
             ):
-                context['notifications'].append(subscription.latest)
+                if nyt_settings.SEND_ONLY_LATEST:
+                    context['notifications'].append(subscription.latest)
+                else:
+                    for notification in subscription.notification_set.filter(is_emailed=False):
+                        context['notifications'].append(notification)
+
             if len(context['notifications']) > 0:
                 # STMP connection send loop
                 while True:
