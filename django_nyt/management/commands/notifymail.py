@@ -68,14 +68,32 @@ class Command(BaseCommand):
     def _send_user_notifications(self, context, connection):
         subject = _(nyt_settings.EMAIL_SUBJECT)
 
-        message = render_to_string(
-            'emails/notification_email_message.txt',
-            context
-        )
-        email = mail.EmailMessage(
-            subject, message, nyt_settings.EMAIL_SENDER,
-            [context['user'].email], connection=connection
-        )
+        bodies = {}
+        for ext in ['html', 'txt']:
+            try:
+                template_name = 'emails/notification_email_message.%s' % (ext)
+                bodies[ext] = render_to_string(template_name,
+                                                context).strip()
+            except TemplateDoesNotExist:
+                # Need at least html or text message body
+                if ext == 'txt' and not bodies:
+                    raise
+
+        if 'txt' in bodies:
+            email = mail.EmailMultiAlternatives(
+                subject, bodies['txt'], nyt_settings.EMAIL_SENDER,
+                [context['user'].email], connection=connection
+            )
+
+            if 'html' in bodies:
+                email.attach_alternative(bodies['html'], 'text/html')
+        else:
+            email = mail.EmailMessage(
+                subject, bodies['html'], nyt_settings.EMAIL_SENDER,
+                [context['user'].email], connection=connection
+            )
+            email.content_subtype = 'html'  # Set main content text/html
+
         self.logger.info("Sending to: %s" % context['user'].email)
         email.send(fail_silently=False)
 
