@@ -14,6 +14,7 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, activate, deactivate
 from django.conf import settings
+from django.template import TemplateDoesNotExist
 
 from django_nyt import models
 from django_nyt import settings as nyt_settings
