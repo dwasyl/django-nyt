@@ -6,11 +6,12 @@ import sys
 import time
 import smtplib
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.management.base import BaseCommand
+from django.db.models import F, Q, ExpressionWrapper, DateTimeField, DurationField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, activate, deactivate
 from django.conf import settings
@@ -166,12 +167,12 @@ class Command(BaseCommand):
         # This could be /improved by looking up the last notified person
         last_sent = None
 
-        while True:
+        started_sending_at = datetime.now()
+        self.logger.info(
+            "Starting send loop at %s" %
+            str(started_sending_at))
 
-            started_sending_at = datetime.now()
-            self.logger.info(
-                "Starting send loop at %s" %
-                str(started_sending_at))
+        while True:
             if last_sent:
                 user_settings = models.Settings.objects.filter(
                     interval__lte=(
@@ -209,7 +210,14 @@ class Command(BaseCommand):
             raise
 
         if not user_settings:
-            user_settings = models.Settings.objects.all().order_by('user')
+            # checks last sent date for each Setting and if it's past the interval get ready to send
+            # Builds duration field manually rather than change Model to mkae interval a DurationField
+            # Convert interval field to microseconds for DurationField
+            user_settings = models.Settings.objects.annotate(
+                duration=ExpressionWrapper(F('interval')*60000000, output_field=DurationField())).annotate(
+                send_date=ExpressionWrapper(F('last_sent') + F('duration'), output_field=DateTimeField())).filter(
+                Q(send_date__lte=datetime.now()) |
+                Q(last_sent__isnull=True)).order_by('user')
 
         context = {'user': None,
                    'username': None,
@@ -246,6 +254,8 @@ class Command(BaseCommand):
                         for n in context['notifications']:
                             n.is_emailed = True
                             n.save()
+                        setting.last_sent = datetime.now()
+                        setting.save(update_fields=['last_sent'])
                         break
                     except smtplib.SMTPSenderRefused:
                         self.logger.error(

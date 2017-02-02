@@ -77,6 +77,11 @@ class Settings(models.Model):
         default=False,
         verbose_name=_("Default for new subscriptions"),
     )
+    last_sent = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("E-mail notifications last sent"),
+    )
 
     def __str__(self):
         obj_name = _("Settings for %s") % getattr(
@@ -185,6 +190,7 @@ class Subscription(models.Model):
         if obj:
             return obj
         return None
+
 
 @python_2_unicode_compatible
 class Notification(models.Model):
