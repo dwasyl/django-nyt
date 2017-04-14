@@ -175,6 +175,7 @@ class Command(BaseCommand):
         while True:
             if last_sent:
                 user_settings = models.Settings.objects.filter(
+                    user__is_active=True).filter(
                     interval__lte=(
                         (started_sending_at -
                          last_sent).seconds //
@@ -211,9 +212,10 @@ class Command(BaseCommand):
 
         if not user_settings:
             # checks last sent date for each Setting and if it's past the interval get ready to send
-            # Builds duration field manually rather than change Model to mkae interval a DurationField
+            # Builds duration field manually rather than change Model to make interval a DurationField
             # Convert interval field to microseconds for DurationField
-            user_settings = models.Settings.objects.annotate(
+            # Only check activate user accounts
+            user_settings = models.Settings.objects.filter(user__is_active=True).annotate(
                 duration=ExpressionWrapper(F('interval')*60000000, output_field=DurationField())).annotate(
                 send_date=ExpressionWrapper(F('last_sent') + F('duration'), output_field=DateTimeField())).filter(
                 Q(send_date__lte=datetime.now()) |
