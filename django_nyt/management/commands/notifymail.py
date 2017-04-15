@@ -252,7 +252,10 @@ class Command(BaseCommand):
                 # STMP connection send loop
                 while True:
                     try:
-                        self._send_user_notifications(context, connection)
+                        # Don't send e-mail if interval is below 0 (disabled). Mark notifications as emailed anyway
+                        if setting.interval >= 0:
+                            self._send_user_notifications(context, connection)
+
                         for n in context['notifications']:
                             n.is_emailed = True
                             n.save()
