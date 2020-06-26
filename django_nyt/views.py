@@ -35,6 +35,7 @@ def get_notifications(
                      'occurrences': n.occurrences,
                      'occurrences_msg': _('%d times') % n.occurrences,
                      'type': n.subscription.notification_type.key if n.subscription else None,
+                     'type_lbl': n.subscription.notification_type.label if n.subscription else None,
                      'since': naturaltime(n.created)} for n in notifications[:max_results]]}
     """
 
@@ -65,6 +66,7 @@ def get_notifications(
                          'occurrences': n.occurrences,
                          'occurrences_msg': _('%d times') % n.occurrences,
                          'type': n.subscription.notification_type.key if n.subscription else None,
+                         'type_lbl': n.subscription.notification_type.label if n.subscription else None,
                          'since': naturaltime(n.created)} for n in notifications[:max_results]]}
 
 
