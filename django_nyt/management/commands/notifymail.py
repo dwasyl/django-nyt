@@ -156,7 +156,6 @@ class Command(BaseCommand):
         deactivate()
 
     def send_loop(self, connection, sleep_time):
-
         # This could be /improved by looking up the last notified person
         last_sent = None
 
@@ -267,6 +266,11 @@ class Command(BaseCommand):
                 send_emails=True,
                 latest__is_emailed=False
             ):
-                context['notifications'].append(subscription.latest)
+
+                if nyt_settings.SEND_ONLY_LATEST:
+                    context['notifications'].append(subscription.latest)
+                else:
+                    for notification in subscription.notification_set.filter(is_emailed=False):
+                        context['notifications'].append(notification)
 
             self._send_batch(context, connection, setting)

@@ -29,6 +29,11 @@ EMAIL_SENDER = getattr(
 )
 """Default sender email"""
 
+SEND_ONLY_LATEST = getattr(django_settings, 'NYT_SEND_ONLY_LATEST', True)
+"""Email notifications are sent to subscribers, by default only the latest
+notification for each subscription is sent. When false, sends all of the
+unsent notifications to subscribers."""
+
 # You can always make up more numbers... they simply identify which notifications
 # to send when invoking the script, and the number indicates how many hours
 # to minimum pass between each notification.
