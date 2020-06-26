@@ -192,6 +192,11 @@ class Settings(models.Model):
     modified = models.DateTimeField(
         auto_now=True,
         verbose_name=_("modified"),
+
+    last_sent = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("E-mail notifications last sent"),
     )
 
     def __str__(self):

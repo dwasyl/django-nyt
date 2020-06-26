@@ -10,6 +10,7 @@ class SettingsAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "interval",
+        "last_sent",
     )
 
 
@@ -20,6 +21,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         "notification_type",
         "display_interval",
         "send_emails",
+        "display_last_sent",
     )
 
     def display_user(self, instance):
@@ -31,6 +33,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
         return instance.settings.interval
 
     display_interval.short_description = _("interval")
+
+    def display_last_sent(self, instance):
+        return instance.settings.last_sent
+    display_last_sent.short_description = _("last sent")
 
 
 class NotificationAdmin(admin.ModelAdmin):
