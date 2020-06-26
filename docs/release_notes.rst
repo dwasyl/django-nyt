@@ -1,6 +1,31 @@
 Release Notes
 =============
 
+Unreleased
+----------
+
+**Added**
+
+ * ``NYT_SEND_ONLY_LATEST`` setting to enable e-mail notifications for most recent notification or all unset notifications for the subscription.
+ * Support for HTML e-mail notification templates, ``notifymail`` tries for the HTML file and falls back to the text file.
+ * Notification interval setting of ``-1`` to represent disable e-mail notifications, ``notifymail`` checks for this interval before sending.
+ * ``Setting`` had a new field added ``last_sent`` to store a datetime when notifications were last sent to the user
+ * ``target_obj`` method to ``Subscription`` to return the target object, if any.
+ * ``type_lbl`` field to Json data for notifications in addition to the ``NotficationType.key`` that was already included.
+ * ``target`` field to Json data for notifcations, as the target object string (if any).
+
+**Changed**
+
+ * Only send e-mail notifications to user accounts where ``active=True``
+ * ``notifymail`` checks the new field ``Settings.last_sent`` and compares it to the user's ``interval`` setting before sending mail. This makes cron jobs work properly with set intervals.
+ * ``notifymail`` checks ``Setting.interval`` to be > -1 before sending notifcations. ``-1`` treated as don't send notifcation e-mails.
+
+Important Notes
+^^^^^^^^^^^^^^^
+
+ * Two new migrations were created for these changes
+
+
 1.4 (2024-08-21)
 ----------------
 
