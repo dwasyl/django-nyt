@@ -196,7 +196,7 @@ class Command(BaseCommand):
         deactivate()
 
     def send_loop(self, connection, sleep_time):
-
+        # This could be /improved by looking up the last notified person
         last_sent = None
 
         while True:
@@ -333,8 +333,8 @@ class Command(BaseCommand):
             context["username"] = getattr(setting.user, setting.user.USERNAME_FIELD)
             # get the index of the tuple corresponding to the interval and
             # get the string name
-            idx = [y[0] for y in app_settings.NYT_INTERVALS].index(setting.interval)
-            context["digest"] = app_settings.NYT_INTERVALS[idx][1]
+            idx = [y[0] for y in nyt_settings.INTERVALS].index(setting.interval)
+            context['digest'] = nyt_settings.INTERVALS[idx][1]
 
             emails_per_template = {}
 
@@ -376,9 +376,16 @@ class Command(BaseCommand):
                 # Always, no matter what.
                 # This also means that if we are sending out emails every 5 minutes, and several
                 # notifications have been triggered meanwhile, they'll go into the same email.
-                emails_per_template[(template_name, subject_template_name)] += list(
-                    subscription.notification_set.filter(is_emailed=False),
-                )
+                if nyt_settings.SEND_ONLY_LATEST:
+                    context['notifications'].append(subscription.latest)
+                    emails_per_template[(template_name, subject_template_name)] += list(
+                        subscription.latest),
+                    )
+                else:
+                    emails_per_template[(template_name, subject_template_name)] += list(
+                        subscription.notification_set.filter(is_emailed=False),
+                    )
+
 
             # Send the prepared template names, subjects and context to the user
             for (
