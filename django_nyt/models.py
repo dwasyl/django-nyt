@@ -89,6 +89,12 @@ class Settings(models.Model):
         verbose_name=_("Default for new subscriptions"),
     )
 
+    last_sent = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("E-mail notifications last sent"),
+    )
+
     def __str__(self):
         obj_name = _("Settings for %s") % getattr(
             self.user, self.user.USERNAME_FIELD)

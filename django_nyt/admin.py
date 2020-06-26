@@ -5,12 +5,12 @@ from django_nyt import models, settings
 
 class SettingsAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
-    list_display = ('user', 'interval',)
+    list_display = ('user', 'interval', 'last_sent')
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
     raw_id_fields = ('settings',)
-    list_display = ('display_user', 'notification_type', 'display_interval',)
+    list_display = ('display_user', 'notification_type', 'display_interval', 'display_last_sent')
 
     def display_user(self, instance):
         return instance.settings.user
@@ -19,6 +19,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
     def display_interval(self, instance):
         return instance.settings.interval
     display_interval.short_description = _("interval")
+
+    def display_last_sent(self, instance):
+        return instance.settings.last_sent
+    display_last_sent.short_description = _("last sent")
 
 
 class NotificationAdmin(admin.ModelAdmin):

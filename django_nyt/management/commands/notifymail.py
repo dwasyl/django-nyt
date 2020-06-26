@@ -9,8 +9,10 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.management.base import BaseCommand
+from django.db.models import F, Q, ExpressionWrapper, DateTimeField, DurationField
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import activate
 from django.utils.translation import deactivate
 from django.utils.translation import gettext as _
@@ -178,12 +180,12 @@ class Command(BaseCommand):
         # This could be /improved by looking up the last notified person
         last_sent = None
 
-        while True:
+        started_sending_at = datetime.now()
+        self.logger.info(
+            "Starting send loop at %s" %
+            str(started_sending_at))
 
-            started_sending_at = datetime.now()
-            self.logger.info(
-                "Starting send loop at %s" %
-                str(started_sending_at))
+        while True:
             if last_sent:
                 user_settings = models.Settings.objects.filter(
                     user__is_active=True,
@@ -232,6 +234,11 @@ class Command(BaseCommand):
                 for n in notifications:
                     n.is_emailed = True
                     n.save()
+
+                # Track last sent date/time
+                setting.last_sent = timezone.now()
+                setting.save(update_fields=['last_sent'])
+
                 break
             except smtplib.SMTPSenderRefused:
                 self.logger.error(
@@ -267,7 +274,17 @@ class Command(BaseCommand):
         connection.open()
 
         if not user_settings:
-            user_settings = models.Settings.objects.filter(user__is_active=True).order_by('user')
+            # Checks last_sent for each Setting and only send notifications if it's past the interval
+            # Builds duration field manually (rather than change Model to make interval a DurationField)
+            # Converts interval field to microseconds for DurationField
+            user_settings = models.Settings.objects.annotate(
+                    duration=ExpressionWrapper(F('interval')*60000000, output_field=DurationField())
+                ).annotate(
+                    send_date=ExpressionWrapper(F('last_sent') + F('duration'), output_field=DateTimeField())
+                ).filter(
+                    Q(send_date__lte=timezone.now()) |
+                    Q(last_sent__isnull=True)
+                ).order_by('user')
 
         context = {'user': None,
                    'username': None,
