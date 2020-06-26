@@ -11,6 +11,10 @@ django-nyt
 .. image:: https://codecov.io/github/django-wiki/django-nyt/coverage.svg?branch=master
   :target: https://codecov.io/github/django-wiki/django-nyt?branch=master
 
+Fork Notes
+----------
+A few changes for required functionality, basic notes are included in the release notes.
+
 Concept
 -------
 
