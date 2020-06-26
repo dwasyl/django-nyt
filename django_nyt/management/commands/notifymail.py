@@ -186,6 +186,7 @@ class Command(BaseCommand):
                 str(started_sending_at))
             if last_sent:
                 user_settings = models.Settings.objects.filter(
+                    user__is_active=True,
                     interval__lte=(
                         (started_sending_at - last_sent).seconds // 60) // 60
                 ).order_by('user')
@@ -262,7 +263,7 @@ class Command(BaseCommand):
         connection.open()
 
         if not user_settings:
-            user_settings = models.Settings.objects.all().order_by('user')
+            user_settings = models.Settings.objects.filter(user__is_active=True).order_by('user')
 
         context = {'user': None,
                    'username': None,
