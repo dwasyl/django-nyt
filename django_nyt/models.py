@@ -312,6 +312,18 @@ class Subscription(models.Model):
         verbose_name = _("subscription")
         verbose_name_plural = _("subscriptions")
 
+    @property
+    def target_obj(self):
+        """Returns GFK object for this subscription (if there is one specified)"""
+        if not self.object_id or not self.notification_type.content_type:
+            return None
+
+        obj_type = self.notification_type.content_type
+        obj = obj_type.get_object_for_this_type(pk=self.object_id)
+
+        if obj:
+            return obj
+        return None
 
 class Notification(models.Model):
 
