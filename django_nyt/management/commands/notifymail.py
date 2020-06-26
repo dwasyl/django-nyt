@@ -10,6 +10,7 @@ from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.management.base import BaseCommand
 from django.db.models import Q
+from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import activate
@@ -96,7 +97,6 @@ class Command(BaseCommand):
     def _render_and_send(
         self, template_name, template_subject_name, context, connection
     ):
-
         # This setting overrides everything
         if app_settings.NYT_EMAIL_SUBJECT:
             # Notice that this usually is a lazy translation object
@@ -106,15 +106,34 @@ class Command(BaseCommand):
 
         subject = subject.replace("\n", "").strip()
 
-        message = render_to_string(template_name, context)
-        email = mail.EmailMessage(
-            subject,
-            message,
-            app_settings.NYT_EMAIL_SENDER,
-            [context["user"].email],
-            connection=connection,
-        )
-        self.logger.info("Sending to: %s" % context["user"].email)
+        bodies = {}
+        for ext in ['html', 'txt']:
+            try:
+                # Adjust default naming of templates to drop the default ext
+                available_template_name = '%s.%s' % (template_name.rpslit(".", 1)[0], ext)
+                bodies[ext] = render_to_string(available_template_name,
+                                                context).strip()
+            except TemplateDoesNotExist:
+                # Need at least html or text message body
+                if ext == 'txt' and not bodies:
+                    raise
+
+        if 'txt' in bodies:
+            email = mail.EmailMultiAlternatives(
+                subject, bodies['txt'], app_settings.NYT_EMAIL_SENDER,
+                [context['user'].email], connection=connection
+            )
+
+            if 'html' in bodies:
+                email.attach_alternative(bodies['html'], 'text/html')
+        else:
+            email = mail.EmailMessage(
+                subject, bodies['html'], app_settings.NYT_EMAIL_SENDER,
+                [context['user'].email], connection=connection
+            )
+            email.content_subtype = 'html'  # Set main content text/html
+
+        self.logger.info("Sending to: %s" % context['user'].email)
         email.send(fail_silently=False)
 
     def _daemonize(self):
@@ -333,8 +352,8 @@ class Command(BaseCommand):
             context["username"] = getattr(setting.user, setting.user.USERNAME_FIELD)
             # get the index of the tuple corresponding to the interval and
             # get the string name
-            idx = [y[0] for y in nyt_settings.INTERVALS].index(setting.interval)
-            context['digest'] = nyt_settings.INTERVALS[idx][1]
+            idx = [y[0] for y in app_settings.NYT_INTERVALS].index(setting.interval)
+            context['digest'] = app_settings.NYT_INTERVALS[idx][1]
 
             emails_per_template = {}
 
@@ -376,8 +395,7 @@ class Command(BaseCommand):
                 # Always, no matter what.
                 # This also means that if we are sending out emails every 5 minutes, and several
                 # notifications have been triggered meanwhile, they'll go into the same email.
-                if nyt_settings.SEND_ONLY_LATEST:
-                    context['notifications'].append(subscription.latest)
+                if app_settings.NYT_SEND_ONLY_LATEST:
                     emails_per_template[(template_name, subject_template_name)] += list(
                         subscription.latest),
                     )
