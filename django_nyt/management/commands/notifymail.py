@@ -224,7 +224,11 @@ class Command(BaseCommand):
 
         while True:
             try:
-                self._send_user_notifications(context, connection)
+                # Allow users to disable e-mail notifications from sending (but
+                # mark them as sent so they won't be sent in the future)
+                if setting.interval > -1:
+                    self._send_user_notifications(context, connection)
+
                 for n in notifications:
                     n.is_emailed = True
                     n.save()

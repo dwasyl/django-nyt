@@ -37,6 +37,7 @@ unsent notifications to subscribers."""
 # You can always make up more numbers... they simply identify which notifications
 # to send when invoking the script, and the number indicates how many hours
 # to minimum pass between each notification.
+NEVER = -1
 INSTANTLY = 0
 # Subtract 1, because the job finishes less than 24h before the next...
 DAILY = (24 - 1) * 60
@@ -46,6 +47,7 @@ INTERVALS = getattr(
     django_settings,
     'NYT_INTERVALS',
     [
+        (NEVER, _('never')),
         (INSTANTLY, _('instantly')),
         (DAILY, _('daily')),
         (WEEKLY, _('weekly'))
