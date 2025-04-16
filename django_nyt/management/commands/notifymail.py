@@ -110,9 +110,8 @@ class Command(BaseCommand):
         for ext in ['html', 'txt']:
             try:
                 # Adjust default naming of templates to drop the default ext
-                available_template_name = '%s.%s' % (template_name.rpslit(".", 1)[0], ext)
-                bodies[ext] = render_to_string(available_template_name,
-                                                context).strip()
+                available_template_name = '%s.%s' % (template_name.rsplit(".", 1)[0], ext)
+                bodies[ext] = render_to_string(available_template_name, context).strip()
             except TemplateDoesNotExist:
                 # Need at least html or text message body
                 if ext == 'txt' and not bodies:
@@ -327,7 +326,7 @@ class Command(BaseCommand):
             # Builds duration field manually (rather than change Model to make interval a DurationField)
             # Converts interval field to microseconds for DurationField
             user_settings = (
-                models.Settings.objects.all().
+                models.Settings.objects.all()
                 .annotate(
                     duration=ExpressionWrapper(F('interval')*60000000, output_field=DurationField())
                 )
@@ -343,6 +342,7 @@ class Command(BaseCommand):
                 .prefetch_related(
                     "subscription_set", "subscription_set__notification_type"
                 )
+            )
 
         if self.options["domain"]:
             site_object = None
@@ -422,7 +422,7 @@ class Command(BaseCommand):
                 # notifications have been triggered meanwhile, they'll go into the same email.
                 if app_settings.NYT_SEND_ONLY_LATEST:
                     emails_per_template[(template_name, subject_template_name)] += list(
-                        subscription.latest),
+                        subscription.latest,
                     )
                 else:
                     emails_per_template[(template_name, subject_template_name)] += list(
