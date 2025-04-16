@@ -1,7 +1,7 @@
 import re
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_delete
@@ -192,6 +192,7 @@ class Settings(models.Model):
     modified = models.DateTimeField(
         auto_now=True,
         verbose_name=_("modified"),
+    )
 
     last_sent = models.DateTimeField(
         blank=True,
@@ -319,11 +320,12 @@ class Subscription(models.Model):
             return None
 
         obj_type = self.notification_type.content_type
-        obj = obj_type.get_object_for_this_type(pk=self.object_id)
+        try:
+            obj = obj_type.get_object_for_this_type(pk=self.object_id)
+        except ObjectDoesNotExist:
+            obj = None
 
-        if obj:
-            return obj
-        return None
+        return obj
 
 class Notification(models.Model):
 
